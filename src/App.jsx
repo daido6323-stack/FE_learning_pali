@@ -6,7 +6,15 @@ import AdminDashboard from './pages/AdminDashboard';
 import { apiFetch } from './lib/api';
 
 export default function App() {
-  const [screen, setScreen] = useState('landing'); // 'landing', 'app', 'lesson', 'admin'
+  const [screen, setScreen] = useState(() => {
+    if (sessionStorage.getItem('pali_admin_key')) {
+      return 'admin';
+    }
+    if (localStorage.getItem('pali_current_user')) {
+      return 'app';
+    }
+    return 'landing';
+  });
   
   // User profile statistics state
   const [userState, setUserState] = useState({
@@ -160,6 +168,11 @@ export default function App() {
     setScreen('landing');
   };
 
+  const handleAdminLogout = () => {
+    sessionStorage.removeItem('pali_admin_key');
+    setScreen('landing');
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {screen === 'landing' && (
@@ -191,7 +204,7 @@ export default function App() {
 
       {screen === 'admin' && (
         <AdminDashboard
-          onExit={() => setScreen('landing')}
+          onExit={handleAdminLogout}
         />
       )}
     </div>
