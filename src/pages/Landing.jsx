@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-
-// ── Fixed Admin Credentials ──────────────────────────────────────────────────
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'admin123';
+import { apiFetch } from '../lib/api';
 
 export default function Landing({ onStart, onHaveAccount, onStartAdmin }) {
   const [authMode, setAuthMode] = useState(null); // null | 'login' | 'register'
@@ -19,20 +16,35 @@ export default function Landing({ onStart, onHaveAccount, onStartAdmin }) {
     setAuthMode(null);
   };
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     if (!username.trim() || !password) {
       setErrorMsg('Vui lòng nhập đầy đủ thông tin!');
       return;
     }
 
-    // Check admin credentials first
-    if (
-      username.trim().toLowerCase() === ADMIN_USERNAME &&
-      password === ADMIN_PASSWORD
-    ) {
-      resetForm();
-      onStartAdmin();
+    // Check admin credentials via backend
+    if (username.trim().toLowerCase() === 'admin') {
+      try {
+        const response = await apiFetch('/api/admin/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            sessionStorage.setItem('pali_admin_key', password);
+            resetForm();
+            onStartAdmin();
+            return;
+          }
+        }
+        setErrorMsg('Mật khẩu Admin không chính xác!');
+      } catch (err) {
+        setErrorMsg('Không kết nối được tới máy chủ xác thực.');
+      }
       return;
     }
 

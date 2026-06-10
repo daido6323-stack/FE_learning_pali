@@ -11,5 +11,15 @@ export const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
  */
 export async function apiFetch(path, options = {}) {
   const url = `${API_BASE}${path}`;
+  
+  // Inject x-admin-key header if it exists in session
+  const adminKey = sessionStorage.getItem('pali_admin_key');
+  if (adminKey) {
+    options.headers = {
+      ...options.headers,
+      'x-admin-key': adminKey
+    };
+  }
+
   return fetch(url, options);
 }
