@@ -49,51 +49,59 @@ export default function Landing({ onStart, onHaveAccount, onStartAdmin }) {
     }
 
     // Regular user login
-    const accounts = JSON.parse(localStorage.getItem('pali_accounts') || '[]');
-    const user = accounts.find(
-      a => a.username === username.trim().toLowerCase() && a.password === password
-    );
-
-    if (user) {
-      localStorage.setItem('pali_current_user', JSON.stringify(user));
-      localStorage.setItem('pali_profile_name', user.profileName);
-      localStorage.setItem('pali_profile_xp', user.xp.toString());
-      localStorage.setItem('pali_profile_streak', user.streak.toString());
-      onHaveAccount();
-    } else {
-      setErrorMsg('Tên đăng nhập hoặc mật khẩu không đúng!');
+    try {
+      const response = await apiFetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem('pali_token', data.token);
+        localStorage.setItem('pali_current_user', JSON.stringify(data.user));
+        localStorage.setItem('pali_profile_name', data.user.profileName);
+        localStorage.setItem('pali_profile_xp', data.user.xp.toString());
+        localStorage.setItem('pali_profile_streak', data.user.streak.toString());
+        onHaveAccount();
+      } else {
+        setErrorMsg(data.error || 'Tên đăng nhập hoặc mật khẩu không đúng!');
+      }
+    } catch (err) {
+      setErrorMsg('Không kết nối được tới máy chủ.');
     }
   };
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     if (!profileName.trim() || !username.trim() || !password) {
       setErrorMsg('Vui lòng nhập đầy đủ các trường thông tin!');
       return;
     }
-    const accounts = JSON.parse(localStorage.getItem('pali_accounts') || '[]');
-    const normalizedUsername = username.trim().toLowerCase();
 
-    if (accounts.some(a => a.username === normalizedUsername)) {
-      setErrorMsg('Tên đăng nhập đã tồn tại trên hệ thống!');
-      return;
+    try {
+      const response = await apiFetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          password,
+          profileName: profileName.trim()
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem('pali_token', data.token);
+        localStorage.setItem('pali_current_user', JSON.stringify(data.user));
+        localStorage.setItem('pali_profile_name', data.user.profileName);
+        localStorage.setItem('pali_profile_xp', data.user.xp.toString());
+        localStorage.setItem('pali_profile_streak', data.user.streak.toString());
+        onStart();
+      } else {
+        setErrorMsg(data.error || 'Đăng ký thất bại!');
+      }
+    } catch (err) {
+      setErrorMsg('Không kết nối được tới máy chủ.');
     }
-
-    const newUser = {
-      username: normalizedUsername,
-      password,
-      profileName: profileName.trim(),
-      xp: 0,
-      streak: 1
-    };
-
-    accounts.push(newUser);
-    localStorage.setItem('pali_accounts', JSON.stringify(accounts));
-    localStorage.setItem('pali_current_user', JSON.stringify(newUser));
-    localStorage.setItem('pali_profile_name', newUser.profileName);
-    localStorage.setItem('pali_profile_xp', '0');
-    localStorage.setItem('pali_profile_streak', '1');
-    onStart();
   };
 
   return (

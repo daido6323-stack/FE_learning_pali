@@ -29,7 +29,7 @@ export default function Dashboard({
       const resUnits = await apiFetch('/api/units');
       if (resUnits.ok) setUnits(await resUnits.json());
 
-      const resProgress = await apiFetch('/api/progress/1'); // static userId = 1
+      const resProgress = await apiFetch('/api/progress');
       if (resProgress.ok) setUserProgress(await resProgress.json());
 
       const resDict = await apiFetch('/api/dictionary');

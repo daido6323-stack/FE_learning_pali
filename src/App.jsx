@@ -32,6 +32,33 @@ export default function App() {
 
   // Initialize profile configurations
   useEffect(() => {
+    const fetchMe = async () => {
+      const token = localStorage.getItem('pali_token');
+      if (token) {
+        try {
+          const response = await apiFetch('/api/auth/me');
+          if (response.ok) {
+            const data = await response.json();
+            setUserState(prev => ({
+              ...prev,
+              profileName: data.profileName,
+              xp: data.xp,
+              streak: data.streak
+            }));
+            localStorage.setItem('pali_current_user', JSON.stringify(data));
+            localStorage.setItem('pali_profile_name', data.profileName);
+            localStorage.setItem('pali_profile_xp', data.xp.toString());
+            localStorage.setItem('pali_profile_streak', data.streak.toString());
+          } else if (response.status === 401) {
+            handleLogout();
+          }
+        } catch (err) {
+          console.error('Không tải được thông tin từ máy chủ, dùng dữ liệu cache.');
+        }
+      }
+    };
+
+    // Load initial cached data
     const savedName = localStorage.getItem('pali_profile_name');
     const savedXP = localStorage.getItem('pali_profile_xp');
     const savedStreak = localStorage.getItem('pali_profile_streak');
@@ -42,9 +69,11 @@ export default function App() {
       xp: savedXP ? parseInt(savedXP) : 0,
       streak: savedStreak ? parseInt(savedStreak) : 1
     }));
+
+    fetchMe();
   }, []);
 
-  const updateState = (updates) => {
+  const updateState = async (updates) => {
     setUserState(prev => {
       const next = { ...prev, ...updates };
       if (updates.profileName !== undefined) localStorage.setItem('pali_profile_name', next.profileName);
@@ -53,22 +82,24 @@ export default function App() {
       
       const currentUser = JSON.parse(localStorage.getItem('pali_current_user') || 'null');
       if (currentUser) {
-        const accounts = JSON.parse(localStorage.getItem('pali_accounts') || '[]');
-        const idx = accounts.findIndex(a => a.username === currentUser.username);
-        if (idx !== -1) {
-          if (updates.profileName !== undefined) accounts[idx].profileName = next.profileName;
-          if (updates.xp !== undefined) accounts[idx].xp = next.xp;
-          if (updates.streak !== undefined) accounts[idx].streak = next.streak;
-          localStorage.setItem('pali_accounts', JSON.stringify(accounts));
-          
-          currentUser.profileName = accounts[idx].profileName;
-          currentUser.xp = accounts[idx].xp;
-          currentUser.streak = accounts[idx].streak;
-          localStorage.setItem('pali_current_user', JSON.stringify(currentUser));
-        }
+        currentUser.profileName = next.profileName;
+        currentUser.xp = next.xp;
+        currentUser.streak = next.streak;
+        localStorage.setItem('pali_current_user', JSON.stringify(currentUser));
       }
       return next;
     });
+
+    // Sync profile state with the backend
+    try {
+      await apiFetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+    } catch (err) {
+      console.error('Không thể đồng bộ hồ sơ lên server:', err);
+    }
   };
 
   const handleStartLesson = (lessonId) => {
@@ -119,7 +150,6 @@ export default function App() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              userId: 1,
               lessonId: activeLessonId,
               isCompleted: true
             })
@@ -152,6 +182,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('pali_token');
     localStorage.removeItem('pali_current_user');
     localStorage.removeItem('pali_profile_name');
     localStorage.removeItem('pali_profile_xp');
