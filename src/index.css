@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --green: #58cc02;
+    --green-dark: #46a302;
+    --green-light: #d7f7c2;
+    --blue: #1cb0f6;
+    --blue-dark: #1899d6;
+    --blue-light: #ddf4ff;
+    --purple: #ce82ff;
+    --purple-dark: #aa60eb;
+    --purple-light: #f5e3ff;
+    --yellow: #ffc800;
+    --yellow-dark: #e6b400;
+    --yellow-light: #fff5cc;
+    --orange: #ff9600;
+    --red: #ff4b4b;
+    --red-dark: #ea2b2b;
+    --text: #4b4b4b;
+    --text-muted: #afafaf;
+    --border: #e5e5e5;
+  }
+}
+
+/* Custom 3D buttons */
+.btn-3d {
+  position: relative;
+  transition: transform 0.05s, box-shadow 0.05s;
+}
+.btn-3d:active {
+  transform: translateY(4px);
+  box-shadow: none !important;
+}
+
+/* Flashcards 3D Rotating */
+.flashcard-scene {
+  perspective: 1000px;
+}
+.flashcard-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+.flashcard-wrapper.flipped {
+  transform: rotateY(180deg);
+}
+.flashcard-front, .flashcard-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 24px;
+}
+.flashcard-back {
+  transform: rotateY(180deg);
+}
+
+/* Custom virtual keyboard keys */
+.pali-key {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  background: white;
+  border: 2px solid var(--border);
+  border-bottom: 4px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 0;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.05s;
+}
+.pali-key:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+
+/* Word builder cards */
+.word-block-card {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  background: white;
+  border: 2px solid var(--border);
+  border-bottom: 4px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.word-block-card:active:not(.placed) {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+.word-block-card.placed {
+  opacity: 0.25;
+  background: #fafafa;
+  border-bottom-width: 2px;
+  cursor: default;
+}
